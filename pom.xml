@@ -3,9 +3,8 @@
  <groupId>localdomain.localhost.tutorial</groupId>
  <artifactId>java-archive</artifactId>
  <version>1.0-SNAPSHOT</version>
+ <properties>
+     <maven.compiler.source>1.6</maven.compiler.source>
+     <maven.compiler.target>1.6</maven.compiler.target>
+ </properties>
 </project>
-
-<properties>
-    <maven.compiler.source>1.6</maven.compiler.source>
-    <maven.compiler.target>1.6</maven.compiler.target>
-</properties>
