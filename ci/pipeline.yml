@@ -1,0 +1,69 @@
+resources:
+- name: jar-project
+  type: git
+  source:
+    branch: master
+    uri: https://github.com/jponte84/MyProject.git
+
+- name: hello-world-docker-image
+  type: docker-image
+  source:
+    email: jponte84@gmail.com
+    username: jponte84
+    password: ((docker.password))
+    repository: jponte84/concourse-tutorial-hello-world
+
+- name: version
+  type: semver
+  source:
+    initial_version: 0.0.1
+    uri: https://jponte84:((git.password))@github.com/jponte84/MyProject.git
+    branch: master
+    file: version
+    driver: git
+
+
+jobs:
+- name: build-jar
+  public: true
+  serial: true
+  plan:
+  - get: jar-project
+    trigger: true
+  - get: version
+    params: {bump: patch}
+
+  - task: build
+    config:
+      platform: linux
+      image_resource:
+        type: docker-image
+        source:
+          repository: maven
+      inputs:
+        - name: jar-project
+        - name: version
+      outputs:
+        - name: jar-project-output
+      run:
+        path: sh
+        args:
+        - -exc
+        - |
+          export VERSION=((number))
+          if [ -z "${VERSION}" ]
+          then
+             export VERSION=$(cat version/number)
+          fi
+          cd jar-project
+          mvn versions:set -DnewVersion=${VERSION}
+          mvn package
+          cp docker/Dockerfile ../jar-project-output
+          cp target/*.jar ../jar-project-output
+
+  - put: hello-world-docker-image
+    params:
+      build: jar-project-output
+      tag: version/number
+  - put: version
+    params: {file: version/number}
