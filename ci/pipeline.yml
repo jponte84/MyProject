@@ -1,3 +1,10 @@
+resource_types:
+- name: kubernetes
+  type: docker-image
+  source:
+    repository: zlabjp/kubernetes-resource
+    tag: "1.15"
+
 resources:
 - name: jar-project
   type: git
@@ -22,6 +29,10 @@ resources:
     file: version
     driver: git
 
+- name: k8s
+  type: kubernetes
+  source:
+    kubeconfig: ((kubeconfig))
 
 jobs:
 - name: build-jar
@@ -29,7 +40,7 @@ jobs:
   serial: true
   plan:
   - get: jar-project
-    trigger: true
+    trigger: false
   - get: version
     params: {bump: patch}
 
@@ -50,20 +61,55 @@ jobs:
         args:
         - -exc
         - |
-          export VERSION=((number))
-          if [ -z "${VERSION}" ]
-          then
-             export VERSION=$(cat version/number)
-          fi
+          export VERSION=$(cat version/number) 
           cd jar-project
           mvn versions:set -DnewVersion=${VERSION}
           mvn package
           cp docker/Dockerfile ../jar-project-output
           cp target/*.jar ../jar-project-output
-
+  
   - put: hello-world-docker-image
     params:
       build: jar-project-output
       tag: version/number
   - put: version
     params: {file: version/number}
+
+- name: deploy-k8s
+  public: true
+  plan: 
+    - get: jar-project
+      trigger: false
+    - get: version
+    - get: hello-world-docker-image
+      trigger: true
+      passed:
+        - "build-jar"
+
+    - task: change-version
+      config:
+        platform: linux
+        image_resource:
+          type: docker-image
+          source:
+            repository: busybox
+        inputs:
+        - name: version
+        - name: jar-project
+        outputs:  
+        - name: jar-project-out        
+        run:
+          path: sh
+          args:
+          - -exc
+          - |
+            sed -i -e 's/\%%imageversion%%/'$(cat version/number)'/g' jar-project/k8s/deployment.yaml
+            cd jar-project
+            cat k8s/deployment.yaml
+            cp k8s/deployment.yaml ../jar-project-out
+            
+
+    - put: k8s
+      params:
+        kubectl: apply -f jar-project-out/deployment.yaml
+        wait_until_ready: 60
