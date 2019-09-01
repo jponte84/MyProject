@@ -1,3 +1,3 @@
-FROM openjdk
+FROM busybox
 
 COPY *.jar .
