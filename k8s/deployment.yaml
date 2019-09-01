@@ -1,19 +1,15 @@
-apiVersion: apps/v1
-kind: Deployment
+apiVersion: v1
+kind: Pod
 metadata:
-  name: myproject-deployment
+  name: myproject
   labels:
     app: myproject
 spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: myproject
-  template:
-    metadata:
-      labels:
-        app: myproject
-    spec:
-      containers:
-      - name: myproject
-        image: jponte84/concourse-tutorial-hello-world:%%imageversion%%
+  containers:
+  - image: jponte84/concourse-tutorial-hello-world:%%imageversion%%
+    command:
+      - sleep
+      - "3600"
+    imagePullPolicy: IfNotPresent
+    name: myproject
+  restartPolicy: Always
