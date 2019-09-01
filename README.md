@@ -1,4 +1,5 @@
 # MyProject
-
-Création d'un projet exemple en Java.
-L'objectif est de pouvoir utiliser Maven pour build un jar via la commande "mvn package"
+Build a jar.
+Inject jar in a new image FROM openjdk.
+deploy it on kubernetes.
+Concours pipeline is in ci/
