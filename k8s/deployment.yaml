@@ -16,6 +16,6 @@ spec:
     spec:
       containers:
       - name: myproject
-        image: jponte84/concourse-tutorial-hello-world
+        image: jponte84/concourse-tutorial-hello-world:0.0.105
         ports:
         - containerPort: 80
